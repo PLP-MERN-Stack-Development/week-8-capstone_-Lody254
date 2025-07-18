@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical & Finance AI Chatbot</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide-react/0.263.1/lucide-react.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <style>
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css');
+        
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40%, 43% {
+                transform: translateY(-10px);
+            }
+            70% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        const { Send, User, Bot, Heart, DollarSign, AlertTriangle, ExternalLink, Users, MessageCircle, Star, Shield } = lucide;
+
+        const MedicalFinanceChatbot = () => {
+            const [messages, setMessages] = useState([
+                {
+                    id: 1,
+                    type: 'bot',
+                    content: "Hello! I'm your specialized medical and finance assistant. I provide evidence-based information with verified sources. How can I help you today?",
+                    timestamp: new Date(),
+                    category: 'general',
+                    sources: [],
+                    confidence: 'high'
+                }
+            ]);
+            const [inputMessage, setInputMessage] = useState('');
+            const [isTyping, setIsTyping] = useState(false);
+            const [selectedCategory, setSelectedCategory] = useState('general');
+            const [userProfile, setUserProfile] = useState({
+                name: '',
+                consultationHistory: [],
+                preferences: { empathetic: true, detailed: true }
+            });
+            const messagesEndRef = useRef(null);
+
+            const scrollToBottom = () => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            };
+
+            useEffect(() => {
+                scrollToBottom();
+            }, [messages]);
+
+            // Enhanced knowledge base with more comprehensive coverage
+            const knowledgeBase = {
+                medical: {
+                    "heart attack": {
+                        response: "A heart attack (myocardial infarction) occurs when blood flow to part of the heart muscle is blocked. Common symptoms include chest pain, shortness of breath, and pain in arms or jaw. If you suspect someone is having a heart attack, call emergency services immediately.",
+                        sources: [
+                            { title: "American Heart Association Guidelines", url: "https://www.heart.org", type: "clinical" },
+                            { title: "Mayo Clinic - Heart Attack", url: "https://mayoclinic.org", type: "educational" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: true
+                    },
+                    "diabetes": {
+                        response: "Type 2 diabetes is a chronic condition affecting how your body processes blood sugar. Management includes healthy diet, regular exercise, medication adherence, and blood sugar monitoring. Regular check-ups with healthcare providers are essential.",
+                        sources: [
+                            { title: "American Diabetes Association", url: "https://diabetes.org", type: "clinical" },
+                            { title: "CDC Diabetes Guidelines", url: "https://cdc.gov", type: "government" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: false
+                    },
+                    "blood pressure": {
+                        response: "High blood pressure (hypertension) is often called the 'silent killer' because it typically has no symptoms. Normal blood pressure is less than 120/80 mmHg. Management includes reducing sodium intake, regular exercise, maintaining healthy weight, and taking prescribed medications.",
+                        sources: [
+                            { title: "American Heart Association - Blood Pressure", url: "https://www.heart.org", type: "clinical" },
+                            { title: "NIH - High Blood Pressure", url: "https://www.nhlbi.nih.gov", type: "government" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: false
+                    },
+                    "medication": {
+                        response: "Always take medications as prescribed by your healthcare provider. Never stop or change medications without consulting your doctor. Keep a current list of all medications and supplements you take. Be aware of potential side effects and drug interactions.",
+                        sources: [
+                            { title: "FDA - Medication Safety", url: "https://www.fda.gov", type: "regulatory" },
+                            { title: "WebMD - Medication Guide", url: "https://www.webmd.com", type: "educational" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: true
+                    }
+                },
+                finance: {
+                    "investment": {
+                        response: "Diversified investing involves spreading investments across different asset classes to reduce risk. Consider your risk tolerance, time horizon, and financial goals. Dollar-cost averaging and index funds are common strategies for beginners.",
+                        sources: [
+                            { title: "Investopedia - Diversification", url: "https://investopedia.com", type: "educational" },
+                            { title: "SEC Investor Guidelines", url: "https://sec.gov", type: "regulatory" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: false
+                    },
+                    "retirement": {
+                        response: "Retirement planning should start early to benefit from compound interest. Consider 401(k) employer matching, IRA contributions, and diversified portfolios. Generally, aim to save 10-15% of income for retirement.",
+                        sources: [
+                            { title: "Department of Labor - Retirement", url: "https://dol.gov", type: "government" },
+                            { title: "Financial Planning Association", url: "https://onefpa.org", type: "professional" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: false
+                    },
+                    "budget": {
+                        response: "A good budget follows the 50/30/20 rule: 50% for needs (housing, utilities, food), 30% for wants (entertainment, dining out), and 20% for savings and debt repayment. Track your expenses for a month to understand your spending patterns.",
+                        sources: [
+                            { title: "Consumer Financial Protection Bureau", url: "https://consumerfinance.gov", type: "government" },
+                            { title: "Mint - Budgeting Guide", url: "https://mint.intuit.com", type: "educational" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: false
+                    },
+                    "credit": {
+                        response: "Good credit is essential for loans, mortgages, and sometimes employment. Pay bills on time, keep credit utilization below 30%, don't close old accounts, and check your credit report regularly for errors. Credit scores range from 300-850.",
+                        sources: [
+                            { title: "Experian - Credit Education", url: "https://www.experian.com", type: "educational" },
+                            { title: "FTC - Credit Reports", url: "https://www.ftc.gov", type: "regulatory" }
+                        ],
+                        confidence: "high",
+                        requiresExpert: false
+                    }
+                }
+            };
+
+            const getResponseCategory = (message) => {
+                const medicalTerms = ['health', 'medical', 'doctor', 'symptom', 'disease', 'heart', 'diabetes', 'medication', 'treatment', 'blood pressure', 'hospital', 'nurse', 'pain', 'fever'];
+                const financeTerms = ['money', 'investment', 'retirement', 'finance', 'budget', 'loan', 'credit', 'savings', 'tax', 'mortgage', 'debt', 'bank', 'income', 'expense'];
+                
+                const lowerMessage = message.toLowerCase();
+                
+                if (medicalTerms.some(term => lowerMessage.includes(term))) return 'medical';
+                if (financeTerms.some(term => lowerMessage.includes(term))) return 'finance';
+                return 'general';
+            };
+
+            const findRelevantInfo = (message, category) => {
+                const lowerMessage = message.toLowerCase();
+                
+                if (category === 'medical') {
+                    for (const [key, info] of Object.entries(knowledgeBase.medical)) {
+                        if (lowerMessage.includes(key)) return info;
+                    }
+                } else if (category === 'finance') {
+                    for (const [key, info] of Object.entries(knowledgeBase.finance)) {
+                        if (lowerMessage.includes(key)) return info;
+                    }
+                }
+                
+                return null;
+            };
+
+            const generateEmpatheticResponse = (category, hasInfo) => {
+                const empathetic = userProfile.preferences.empathetic;
+                if (!empathetic) return '';
+
+                if (category === 'medical') {
+                    return hasInfo ? 
+                        "I understand health concerns can be worrying. Here's what I can share: " :
+                        "I understand you're seeking health information. While I can provide general educational content, please consult healthcare professionals for personalized advice. ";
+                } else if (category === 'finance') {
+                    return hasInfo ?
+                        "Financial decisions can feel overwhelming. Let me help clarify: " :
+                        "I understand financial planning can be complex. While I can provide general guidance, consider consulting a financial advisor for personalized advice. ";
+                }
+                return '';
+            };
+
+            const handleSendMessage = () => {
+                if (!inputMessage.trim()) return;
+
+                const userMessage = {
+                    id: messages.length + 1,
+                    type: 'user',
+                    content: inputMessage,
+                    timestamp: new Date(),
+                    category: selectedCategory
+                };
+
+                setMessages(prev => [...prev, userMessage]);
+                setInputMessage('');
+                setIsTyping(true);
+
+                // Simulate AI processing
+                setTimeout(() => {
+                    const detectedCategory = getResponseCategory(inputMessage);
+                    const relevantInfo = findRelevantInfo(inputMessage, detectedCategory);
+                    
+                    let botResponse = {
+                        id: messages.length + 2,
+                        type: 'bot',
+                        timestamp: new Date(),
+                        category: detectedCategory,
+                        sources: [],
+                        confidence: 'medium',
+                        requiresExpert: false
+                    };
+
+                    if (relevantInfo) {
+                        const empatheticIntro = generateEmpatheticResponse(detectedCategory, true);
+                        botResponse.content = empatheticIntro + relevantInfo.response;
+                        botResponse.sources = relevantInfo.sources;
+                        botResponse.confidence = relevantInfo.confidence;
+                        botResponse.requiresExpert = relevantInfo.requiresExpert;
+                    } else {
+                        const empatheticIntro = generateEmpatheticResponse(detectedCategory, false);
+                        botResponse.content = empatheticIntro + "I don't have specific information about this topic in my current knowledge base. For your safety and accuracy, I'd recommend consulting with a qualified professional.";
+                        botResponse.requiresExpert = true;
+                    }
+
+                    setMessages(prev => [...prev, botResponse]);
+                    setIsTyping(false);
+                }, 1500);
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            };
+
+            const requestExpertConsultation = () => {
+                const expertMessage = {
+                    id: messages.length + 1,
+                    type: 'system',
+                    content: "🔄 Connecting you with a human expert. Please wait while we find an available specialist in your area...",
+                    timestamp: new Date(),
+                    category: 'system'
+                };
+                setMessages(prev => [...prev, expertMessage]);
+                
+                setTimeout(() => {
+                    const followupMessage = {
+                        id: messages.length + 2,
+                        type: 'system',
+                        content: "✅ Expert consultation request submitted. You will be contacted within 2-4 hours. In the meantime, if this is an emergency, please call your local emergency services immediately.",
+                        timestamp: new Date(),
+                        category: 'system'
+                    };
+                    setMessages(prev => [...prev, followupMessage]);
+                }, 2000);
+            };
+
+            const SourceCard = ({ source }) => (
+                React.createElement("div", { className: "bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2" },
+                    React.createElement("div", { className: "flex items-center justify-between" },
+                        React.createElement("div", { className: "flex items-center" },
+                            React.createElement(ExternalLink, { className: "h-4 w-4 text-blue-500 mr-2" }),
+                            React.createElement("span", { className: "font-medium text-sm" }, source.title)
+                        ),
+                        React.createElement("span", { className: "text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded" }, source.type)
+                    )
+                )
+            );
+
+            const MessageBubble = ({ message }) => (
+                React.createElement("div", { className: `flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} mb-4` },
+                    React.createElement("div", { className: `max-w-xs lg:max-w-md xl:max-w-lg ${
+                        message.type === 'user' 
+                            ? 'bg-blue-500 text-white' 
+                            : message.type === 'system'
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                            : 'bg-white text-gray-800 border border-gray-200'
+                    } rounded-lg px-4 py-2 shadow-sm` },
+                        
+                        React.createElement("div", { className: "flex items-center mb-2" },
+                            message.type === 'user' ? React.createElement(User, { className: "h-4 w-4 mr-2" }) :
+                            message.type === 'system' ? React.createElement(AlertTriangle, { className: "h-4 w-4 mr-2" }) :
+                            React.createElement(Bot, { className: "h-4 w-4 mr-2" }),
+                            React.createElement("span", { className: "text-xs opacity-75" }, message.timestamp.toLocaleTimeString())
+                        ),
+                        
+                        React.createElement("p", { className: "text-sm" }, message.content),
+                        
+                        message.category && message.type === 'bot' && React.createElement("div", { className: "mt-2 flex items-center" },
+                            message.category === 'medical' && React.createElement(Heart, { className: "h-4 w-4 mr-1 text-red-500" }),
+                            message.category === 'finance' && React.createElement(DollarSign, { className: "h-4 w-4 mr-1 text-green-500" }),
+                            React.createElement("span", { className: "text-xs opacity-75 capitalize" }, message.category),
+                            message.confidence && React.createElement("span", { className: `ml-2 text-xs px-2 py-1 rounded ${
+                                message.confidence === 'high' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-yellow-100 text-yellow-800'
+                            }` }, message.confidence + ' confidence')
+                        ),
+                        
+                        message.sources && message.sources.length > 0 && React.createElement("div", { className: "mt-3" },
+                            React.createElement("p", { className: "text-xs font-medium mb-2" }, "Sources:"),
+                            message.sources.map((source, index) => React.createElement(SourceCard, { key: index, source: source }))
+                        ),
+                        
+                        message.requiresExpert && React.createElement("div", { className: "mt-3 p-2 bg-orange-50 border border-orange-200 rounded" },
+                            React.createElement("div", { className: "flex items-center justify-between" },
+                                React.createElement("p", { className: "text-xs text-orange-800" }, "Expert consultation recommended"),
+                                React.createElement("button", { 
+                                    onClick: requestExpertConsultation,
+                                    className: "text-xs bg-orange-500 text-white px-2 py-1 rounded hover:bg-orange-600"
+                                }, "Connect with Expert")
+                            )
+                        )
+                    )
+                )
+            );
+
+            return React.createElement("div", { className: "max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden" },
+                // Header
+                React.createElement("div", { className: "bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4" },
+                    React.createElement("div", { className: "flex items-center justify-between" },
+                        React.createElement("div", { className: "flex items-center" },
+                            React.createElement(Shield, { className: "h-8 w-8 mr-3" }),
+                            React.createElement("div", null,
+                                React.createElement("h1", { className: "text-xl font-bold" }, "Medical & Finance AI Assistant"),
+                                React.createElement("p", { className: "text-sm opacity-90" }, "Evidence-based answers with verified sources")
+                            )
+                        ),
+                        React.createElement("div", { className: "flex items-center space-x-2" },
+                            React.createElement("div", { className: "flex items-center" },
+                                React.createElement(Star, { className: "h-4 w-4 mr-1" }),
+                                React.createElement("span", { className: "text-sm" }, "4.9/5")
+                            ),
+                            React.createElement("div", { className: "flex items-center" },
+                                React.createElement(Users, { className: "h-4 w-4 mr-1" }),
+                                React.createElement("span", { className: "text-sm" }, "24/7")
+                            )
+                        )
+                    )
+                ),
+
+                // Category Selection
+                React.createElement("div", { className: "bg-gray-50 p-4 border-b" },
+                    React.createElement("div", { className: "flex space-x-2" },
+                        [
+                            { id: 'general', label: 'General', icon: MessageCircle },
+                            { id: 'medical', label: 'Medical', icon: Heart },
+                            { id: 'finance', label: 'Finance', icon: DollarSign }
+                        ].map(category => {
+                            const Icon = category.icon;
+                            return React.createElement("button", {
+                                key: category.id,
+                                onClick: () => setSelectedCategory(category.id),
+                                className: `flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    selectedCategory === category.id
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`
+                            },
+                                React.createElement(Icon, { className: "h-4 w-4 mr-2" }),
+                                category.label
+                            );
+                        })
+                    )
+                ),
+
+                // Messages
+                React.createElement("div", { className: "h-96 overflow-y-auto p-4 space-y-4" },
+                    messages.map((message) => React.createElement(MessageBubble, { key: message.id, message: message })),
+                    
+                    isTyping && React.createElement("div", { className: "flex justify-start" },
+                        React.createElement("div", { className: "bg-gray-100 rounded-lg px-4 py-2 max-w-xs" },
+                            React.createElement("div", { className: "flex items-center" },
+                                React.createElement(Bot, { className: "h-4 w-4 mr-2" }),
+                                React.createElement("div", { className: "flex space-x-1" },
+                                    React.createElement("div", { className: "w-2 h-2 bg-gray-400 rounded-full animate-bounce" }),
+                                    React.createElement("div", { className: "w-2 h-2 bg-gray-400 rounded-full animate-bounce", style: {animationDelay: '0.1s'} }),
+                                    React.createElement("div", { className: "w-2 h-2 bg-gray-400 rounded-full animate-bounce", style: {animationDelay: '0.2s'} })
+                                )
+                            )
+                        )
+                    ),
+                    React.createElement("div", { ref: messagesEndRef })
+                ),
+
+                // Input
+                React.createElement("div", { className: "border-t p-4" },
+                    React.createElement("div", { className: "flex space-x-2" },
+                        React.createElement("input", {
+                            type: "text",
+                            value: inputMessage,
+                            onChange: (e) => setInputMessage(e.target.value),
+                            onKeyPress: handleKeyPress,
+                            placeholder: `Ask a ${selectedCategory} question...`,
+                            className: "flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        }),
+                        React.createElement("button", {
+                            onClick: handleSendMessage,
+                            className: "bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                        }, React.createElement(Send, { className: "h-4 w-4" }))
+                    ),
+                    React.createElement("p", { className: "text-xs text-gray-500 mt-2" },
+                        "⚠️ This is for informational purposes only. Always consult qualified professionals for medical or financial advice."
+                    )
+                )
+            );
+        };
+
+        ReactDOM.render(React.createElement(MedicalFinanceChatbot), document.getElementById('root'));
+    </script>
+</body>
+</html>
